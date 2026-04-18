@@ -6,10 +6,10 @@
 
     <depends>com.intellij.modules.platform</depends>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.avoro.fishprogressbar.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.avoro.fishprogressbar.startup.MyProjectActivity" />
-    </extensions>
+    <applicationListeners>
+        <listener class="com.github.avoro.fishprogressbar.FishProgressBarListener"
+                  topic="com.intellij.ide.ui.LafManagerListener"/>
+        <listener class="com.github.avoro.fishprogressbar.FishProgressBarListener"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    </applicationListeners>
 </idea-plugin>
