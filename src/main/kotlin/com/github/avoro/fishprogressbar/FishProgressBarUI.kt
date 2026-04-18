@@ -58,6 +58,8 @@ class FishProgressBarUI : BasicProgressBarUI() {
 
     private var frame = 0
     private var timer: Timer? = null
+    private var prevProgress = 0.0
+    private var facingRight = true
 
     override fun installUI(c: JComponent) {
         super.installUI(c)
@@ -82,7 +84,7 @@ class FishProgressBarUI : BasicProgressBarUI() {
         // suppress percentage text over the animation
     }
 
-    private fun paintScene(g2: Graphics2D, width: Int, height: Int, progress: Double) {
+    private fun paintScene(g2: Graphics2D, width: Int, height: Int, progress: Double, goingRight: Boolean) {
         val w = width.toDouble()
         val h = height.toDouble()
         val ux = w / NATIVE_W   // horizontal unit scale
@@ -147,20 +149,12 @@ class FishProgressBarUI : BasicProgressBarUI() {
         }
         g2.composite = AlphaComposite.SrcOver
 
-        // Fish school — swims left for progress 0→50%, turns right for 50→100%
+        // Fish school — moves left→right with progress; direction set by caller
         val margin = 28.0 * ux
-        val schoolX: Double
-        val facingRight: Boolean
-        if (progress <= 0.5) {
-            schoolX = (w - margin) - (progress * 2.0) * (w - 2.0 * margin)
-            facingRight = false
-        } else {
-            schoolX = margin + ((progress - 0.5) * 2.0) * (w - 2.0 * margin)
-            facingRight = true
-        }
+        val schoolX = margin + progress * (w - 2.0 * margin)
 
         val wiggleA = (frame / 8) % 2 == 0   // tail wiggle ~250 ms at 30 fps
-        paintSchool(g2, schoolX, h / 2.0, ps, facingRight, wiggleA)
+        paintSchool(g2, schoolX, h / 2.0, ps, goingRight, wiggleA)
     }
 
     // --- Scene helpers ---
@@ -351,7 +345,13 @@ class FishProgressBarUI : BasicProgressBarUI() {
     override fun paintDeterminate(g: Graphics, c: JComponent) {
         val g2 = g.create() as Graphics2D
         try {
-            paintScene(g2, c.width, c.height, progressBar.percentComplete)
+            val progress = progressBar.percentComplete
+            // only update direction when progress actually moves — avoids flicker from
+            // multiple paint calls per frame where progress == prevProgress
+            if (progress > prevProgress) facingRight = true
+            else if (progress < prevProgress) facingRight = false
+            prevProgress = progress
+            paintScene(g2, c.width, c.height, progress, facingRight)
         } finally {
             g2.dispose()
         }
@@ -360,10 +360,10 @@ class FishProgressBarUI : BasicProgressBarUI() {
     override fun paintIndeterminate(g: Graphics, c: JComponent) {
         val g2 = g.create() as Graphics2D
         try {
-            // ping-pong back and forth for indeterminate bars
+            // direction comes from phase, not value comparison — no flicker at turnaround
             val t = (frame % 240) / 240.0
             val pingpong = if (t < 0.5) t * 2.0 else (1.0 - t) * 2.0
-            paintScene(g2, c.width, c.height, pingpong)
+            paintScene(g2, c.width, c.height, pingpong, t < 0.5)
         } finally {
             g2.dispose()
         }
