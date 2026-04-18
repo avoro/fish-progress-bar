@@ -6,6 +6,10 @@
 
     <depends>com.intellij.modules.platform</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-    </extensions>
+    <applicationListeners>
+        <listener class="com.github.avoro.fishprogressbar.FishProgressBarListener"
+                  topic="com.intellij.ide.ui.LafManagerListener"/>
+        <listener class="com.github.avoro.fishprogressbar.FishProgressBarListener"
+                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+    </applicationListeners>
 </idea-plugin>
